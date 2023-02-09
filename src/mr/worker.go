@@ -1,6 +1,12 @@
 package mr
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"time"
+)
 import "log"
 import "net/rpc"
 import "hash/fnv"
@@ -19,15 +25,96 @@ func ihash(key string) int {
 	return int(h.Sum32() & 0x7fffffff)
 }
 
+// get number of map task
+func getMapNum() int {
+	args := NumMapArgs{}
+	reply := NumMapReply{}
+	call("Coordinator.Example", &args, &reply)
+	return reply.num
+}
+
+// worker get new task form master
+func getMapTask() (string, int) {
+	args := MapTaskArgs{}
+	reply := MapTaskReply{}
+	call("Coordinator.Example", &args, &reply)
+	return reply.file, reply.id
+}
+
+// notify the master when mapTask is done
+// mes: single/all
+func mapTaskDone(mes, file string) bool {
+	args := MapTaskDoneArgs{}
+	args.mes = mes
+	args.file = file
+	reply := MapTaskDoneReply{}
+	call("Coordinator.Example", &args, &reply)
+	return reply.isDone
+}
+
+// write file after mapf done
+func writeToMiddleFile(taskID int, middleKV []KeyValue) {
+	f := make([]*os.File, 10)
+	for i := 0; i < 10; i++ {
+		fname := fmt.Sprintf("mr-%d-%d", taskID, i)
+		f[i], _ = os.Create(fname)
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				fmt.Errorf("closing file is error")
+			}
+		}(f[i])
+	}
+	// write kv pair to JSON file (read back during the reduce task
+	for _, kv := range middleKV {
+		reduceID := ihash(kv.Key) % 10
+		enc := json.NewEncoder(f[reduceID])
+		err := enc.Encode(&kv)
+		if err != nil {
+			fmt.Errorf("encoding error")
+		}
+	}
+}
+
 // main/mrworker.go calls this function.
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
-
 	// Your worker implementation here.
+	// TODO part-map
+	//mapTaskNum := getMapNum() // map file numbers
+	for {
+		mapFile, mapID := getMapTask()
+		if mapFile != "" { // more
+			f, err := os.Open(mapFile)
+			if err != nil {
+				fmt.Errorf("cannot open this file named %s", mapFile)
+			}
+			mes, err := io.ReadAll(f)
+			if err != nil {
+				fmt.Errorf("cannot read file named %s", mapFile)
+			}
+			f.Close()
+			kv := mapf(mapFile, string(mes))
+			writeToMiddleFile(mapID, kv)
+			mapTaskDone("single", mapFile) // call to master -> this mapTask has been done
+		} else { // mapFile == "" -> none
+			if mapTaskDone("all", "") { // when all over done, break for{}
+				break
+			}
+			time.Sleep(time.Second)
+		}
+	}
+
+	// TODO part-reduce
 
 	// uncomment to send the Example RPC to the coordinator.
 	// CallExample()
 
+}
+
+func getReduceTask() int {
+	// TODO
+	return 0
 }
 
 // example function to show how to make an RPC call to the coordinator.
@@ -55,9 +142,9 @@ func CallExample() {
 // usually returns true.
 // returns false if something goes wrong.
 func call(rpcname string, args interface{}, reply interface{}) bool {
-	// c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
-	sockname := coordinatorSock()
-	c, err := rpc.DialHTTP("unix", sockname)
+	c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":9999")
+	/*	sockname := coordinatorSock()
+		c, err := rpc.DialHTTP("unix", sockname)*/
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}

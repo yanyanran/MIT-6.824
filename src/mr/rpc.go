@@ -22,6 +22,53 @@ type ExampleReply struct { // 回复rpc
 	Y int
 }
 
+// is allover
+
+type AlloverArgs struct {
+}
+
+type AlloverReply struct {
+	done bool
+}
+
+// view the number of maps
+
+type NumMapArgs struct {
+}
+
+type NumMapReply struct {
+	num int
+}
+
+// map task assignment
+
+type MapTaskArgs struct {
+	mes string
+}
+
+type MapTaskReply struct {
+	id   int
+	file string
+}
+
+// map task is done(T/F)
+
+type MapTaskDoneArgs struct {
+	mes  string
+	file string
+}
+
+type MapTaskDoneReply struct {
+	isDone bool
+}
+
+//
+// TODO --reduce
+//
+
+type ReduceArgs struct {
+}
+
 // Add your RPC definitions here.
 
 // Cook up a unique-ish UNIX-domain socket name
