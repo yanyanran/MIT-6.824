@@ -124,6 +124,7 @@ func Worker(mapf func(string, string) []KeyValue,
 				if err != nil {
 					fmt.Errorf("cannot open file named: %v", fileName)
 				}
+				os.Remove(fileName)
 				// read back files
 				dec := json.NewDecoder(f)
 				f.Close()
@@ -152,7 +153,7 @@ func Worker(mapf func(string, string) []KeyValue,
 func IsAllover() bool {
 	args := AlloverArgs{}
 	reply := AlloverReply{}
-	call("Coordinator.isAlloverDone", &args, &reply)
+	call("Coordinator.IsAlloverDone", &args, &reply)
 	return reply.Done
 }
 
@@ -217,9 +218,9 @@ func CallExample() {
 // usually returns true.
 // returns false if something goes wrong.
 func call(rpcname string, args interface{}, reply interface{}) bool {
-	c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":9999")
-	/*	sockname := coordinatorSock()
-		c, err := rpc.DialHTTP("unix", sockname)*/
+	//c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":9999")
+	sockname := coordinatorSock()
+	c, err := rpc.DialHTTP("unix", sockname)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}

@@ -1,7 +1,6 @@
 package mr
 
 import (
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -40,7 +39,7 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 	return nil
 }*/
 
-func (c *Coordinator) isAlloverDone(args *AlloverArgs, reply *AlloverReply) error {
+func (c *Coordinator) IsAlloverDone(args *AlloverArgs, reply *AlloverReply) error {
 	c.MuOver.Lock()
 	reply.Done = c.IsAllover
 	c.MuOver.Unlock()
@@ -118,13 +117,13 @@ func (c *Coordinator) ReduceTaskDone(args *ReduceTaskDoneArgs, reply *ReduceTask
 
 // start a thread that listens for RPCs from worker.go
 func (c *Coordinator) server() {
-	fmt.Println("【now into server...】")
+	//fmt.Println("【now into server...】")
 	rpc.Register(c)
 	rpc.HandleHTTP()
-	l, e := net.Listen("tcp", ":9999")
+	//l, e := net.Listen("tcp", ":9999")
 	sockname := coordinatorSock()
 	os.Remove(sockname)
-	//l, e := net.Listen("unix", sockname)
+	l, e := net.Listen("unix", sockname)
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
@@ -156,7 +155,7 @@ func (c *Coordinator) Done() bool {
 // main/mrcoordinator.go calls this function.
 // nReduce is the number of reduce tasks to use.
 func MakeCoordinator(files []string, nReduce int) *Coordinator {
-	fmt.Println("【now into init master....】")
+	//fmt.Println("【now into init master....】")
 	c := Coordinator{}
 	// Your code here.
 	// init master
