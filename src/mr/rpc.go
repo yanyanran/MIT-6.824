@@ -14,13 +14,13 @@ import "strconv"
 // and reply for an RPC.
 //
 
-type ExampleArgs struct { // 声明参数
+/*type ExampleArgs struct { // 声明参数
 	X int
 }
 
 type ExampleReply struct { // 回复rpc
 	Y int
-}
+}*/
 
 // is allover
 
@@ -67,6 +67,18 @@ type MapTaskDoneReply struct {
 //
 
 type ReduceArgs struct {
+	Mes string
+}
+
+type ReduceReply struct {
+	ID int
+}
+
+type ReduceTaskDoneArgs struct {
+	ID int
+}
+
+type ReduceTaskDoneReply struct {
 }
 
 // Add your RPC definitions here.

@@ -29,7 +29,7 @@ func ihash(key string) int {
 func getMapNum() int {
 	args := NumMapArgs{}
 	reply := NumMapReply{}
-	call("Coordinator.Example", &args, &reply)
+	call("Coordinator.MapNum", &args, &reply)
 	return reply.Num
 }
 
@@ -37,7 +37,7 @@ func getMapNum() int {
 func getMapTask() (string, int) {
 	args := MapTaskArgs{}
 	reply := MapTaskReply{}
-	call("Coordinator.Example", &args, &reply)
+	call("Coordinator.MapTask", &args, &reply)
 	return reply.File, reply.Id
 }
 
@@ -48,7 +48,7 @@ func mapTaskDone(mes, file string) bool {
 	args.Mes = mes
 	args.File = file
 	reply := MapTaskDoneReply{}
-	call("Coordinator.Example", &args, &reply)
+	call("Coordinator.MapTaskDone", &args, &reply)
 	return reply.IsDone
 }
 
@@ -117,7 +117,7 @@ func getReduceTask() int {
 	return 0
 }
 
-// example function to show how to make an RPC call to the coordinator.
+/*// example function to show how to make an RPC call to the coordinator.
 //
 // the RPC argument and reply types are defined in rpc.go.
 func CallExample() {
@@ -136,7 +136,7 @@ func CallExample() {
 
 	// reply.Y should be 100.
 	fmt.Printf("reply.Y %v\n", reply.Y)
-}
+}*/
 
 // send an RPC request to the coordinator, wait for the response.
 // usually returns true.
