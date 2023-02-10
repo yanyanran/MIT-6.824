@@ -105,7 +105,7 @@ func Worker(mapf func(string, string) []KeyValue,
 			kv := mapf(mapFile, string(mes))
 			writeToMiddleFile(mapID, kv)
 			mapTaskDone("single", mapFile) // call to master -> this mapTask has been done
-		} else {                        // mapFile == "" -> none
+		} else { // mapFile == "" -> none
 			if mapTaskDone("all", "") { // when all over done, break for{}
 				break
 			}
@@ -124,10 +124,10 @@ func Worker(mapf func(string, string) []KeyValue,
 				if err != nil {
 					fmt.Errorf("cannot open file named: %v", fileName)
 				}
-				os.Remove(fileName)
+				defer os.Remove(fileName)
 				// read back files
 				dec := json.NewDecoder(f)
-				f.Close()
+				defer f.Close()
 				for {
 					var kv KeyValue
 					if err := dec.Decode(&kv); err != nil {
@@ -138,7 +138,7 @@ func Worker(mapf func(string, string) []KeyValue,
 			}
 			writeToEndFile(reduceID, kva, reducef)
 			reduceTaskDone(reduceID) // call to master
-		} else {             // when reduceID is -1, it means none reduceTask
+		} else { // when reduceID is -1, it means none reduceTask
 			if IsAllover() { // judge all reduceTask is over
 				break
 			}
