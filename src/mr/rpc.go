@@ -28,7 +28,7 @@ type AlloverArgs struct {
 }
 
 type AlloverReply struct {
-	done bool
+	Done bool
 }
 
 // view the number of maps
@@ -37,29 +37,29 @@ type NumMapArgs struct {
 }
 
 type NumMapReply struct {
-	num int
+	Num int
 }
 
 // map task assignment
 
 type MapTaskArgs struct {
-	mes string
+	Mes string
 }
 
 type MapTaskReply struct {
-	id   int
-	file string
+	Id   int
+	File string
 }
 
 // map task is done(T/F)
 
 type MapTaskDoneArgs struct {
-	mes  string
-	file string
+	Mes  string
+	File string
 }
 
 type MapTaskDoneReply struct {
-	isDone bool
+	IsDone bool
 }
 
 //

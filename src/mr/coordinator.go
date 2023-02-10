@@ -41,7 +41,7 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 
 func (c *Coordinator) isAlloverDone(args *AlloverArgs, reply *AlloverReply) error {
 	c.muOver.Lock()
-	reply.done = c.isAllover
+	reply.Done = c.isAllover
 	c.muOver.Unlock()
 	return nil
 }
@@ -58,9 +58,9 @@ func (c *Coordinator) MapTask(args *MapTaskArgs, reply *MapTaskReply) error {
 }
 
 func (c *Coordinator) MapTaskDone(args *MapTaskDoneArgs, reply *MapTaskDoneReply) error {
-	if args.mes == "single" { // worker call master a mapTask is done
+	if args.Mes == "single" { // worker call master a mapTask is done
 		// TODO
-	} else if args.mes == "all" { // worker checks whether mapTask has been completed allover
+	} else if args.Mes == "all" { // worker checks whether mapTask has been completed allover
 		// TODO
 	}
 	return nil
@@ -87,7 +87,7 @@ func (c *Coordinator) server() {
 // main/mrcoordinator.go calls Done() periodically to find out
 // if the entire job has finished.
 func (c *Coordinator) Done() bool {
-	ret := true
+	ret := false
 	// Your code here.
 	// TODO checks reduceTask is done
 

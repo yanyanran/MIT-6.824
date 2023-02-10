@@ -30,7 +30,7 @@ func getMapNum() int {
 	args := NumMapArgs{}
 	reply := NumMapReply{}
 	call("Coordinator.Example", &args, &reply)
-	return reply.num
+	return reply.Num
 }
 
 // worker get new task form master
@@ -38,18 +38,18 @@ func getMapTask() (string, int) {
 	args := MapTaskArgs{}
 	reply := MapTaskReply{}
 	call("Coordinator.Example", &args, &reply)
-	return reply.file, reply.id
+	return reply.File, reply.Id
 }
 
 // notify the master when mapTask is done
 // mes: single/all
 func mapTaskDone(mes, file string) bool {
 	args := MapTaskDoneArgs{}
-	args.mes = mes
-	args.file = file
+	args.Mes = mes
+	args.File = file
 	reply := MapTaskDoneReply{}
 	call("Coordinator.Example", &args, &reply)
-	return reply.isDone
+	return reply.IsDone
 }
 
 // write file after mapf done
