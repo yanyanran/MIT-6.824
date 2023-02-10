@@ -63,7 +63,7 @@ type MapTaskDoneReply struct {
 }
 
 //
-// TODO --reduce
+// reduceTask
 //
 
 type ReduceArgs struct {

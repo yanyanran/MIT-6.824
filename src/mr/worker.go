@@ -81,7 +81,7 @@ func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 	// Your worker implementation here.
 	// TODO part-map
-	//mapTaskNum := getMapNum() // map file numbers
+	mapTaskNum := getMapNum() // map file numbers
 	for {
 		mapFile, mapID := getMapTask()
 		if mapFile != "" { // more
@@ -106,10 +106,27 @@ func Worker(mapf func(string, string) []KeyValue,
 	}
 
 	// TODO part-reduce
+	for {
+		reduceID := getReduceTask()
+		if reduceID != -1 {
+			// ...
+		} else { // when reduceID is -1, it means none reduceTask
+			if IsAllover() { // judge all reduceTask is over
+				break
+			}
+		}
+	}
 
 	// uncomment to send the Example RPC to the coordinator.
 	// CallExample()
 
+}
+
+func IsAllover() bool {
+	args := AlloverArgs{}
+	reply := AlloverReply{}
+	call("Coordinator.isAlloverDone", &args, &reply)
+	return reply.Done
 }
 
 func getReduceTask() int {

@@ -92,7 +92,29 @@ func (c *Coordinator) MapTaskDone(args *MapTaskDoneArgs, reply *MapTaskDoneReply
 	return nil
 }
 
-// TODO reduceTask
+func (c *Coordinator) ReduceTask(args *ReduceArgs, reply *ReduceReply) error {
+	select {
+	case reply.ID = <-c.ReduceTaskChan:
+		go func(id int) {
+			time.Sleep(time.Second * 10)
+			c.MuReduce.Lock()
+			if !c.ReduceTaskState[id] {
+				c.ReduceTaskChan <- id
+			}
+			c.MuReduce.Unlock()
+		}(reply.ID)
+	default:
+		reply.ID = -1
+	}
+	return nil
+}
+
+func (c *Coordinator) ReduceTaskDone(args *ReduceTaskDoneArgs, reply *ReduceTaskDoneReply) error {
+	c.MuReduce.Lock()
+	c.ReduceTaskState[args.ID] = true
+	c.MuReduce.Unlock()
+	return nil
+}
 
 // start a thread that listens for RPCs from worker.go
 func (c *Coordinator) server() {
@@ -113,11 +135,21 @@ func (c *Coordinator) server() {
 // main/mrcoordinator.go calls Done() periodically to find out
 // if the entire job has finished.
 func (c *Coordinator) Done() bool {
-	ret := false
+	ret := true
 	// Your code here.
-	// TODO checks reduceTask is done
-
-	return ret
+	// checks reduceTask is done
+	c.MuReduce.Lock()
+	for _, v := range c.ReduceTaskState {
+		if !v {
+			ret = false
+			break
+		}
+	}
+	c.MuReduce.Unlock()
+	c.MuOver.Lock()
+	c.IsAllover = ret
+	c.MuOver.Unlock()
+	return c.IsAllover
 }
 
 // create a Coordinator.
