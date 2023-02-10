@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"time"
 )
 import "log"
@@ -16,6 +17,13 @@ type KeyValue struct {
 	Key   string
 	Value string
 }
+
+// ByKey for sorting by key.
+type ByKey []KeyValue
+
+func (a ByKey) Len() int           { return len(a) }
+func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByKey) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
 // use ihash(key) % NReduce to choose the reduce
 // task number for each KeyValue emitted by Map.
@@ -97,7 +105,7 @@ func Worker(mapf func(string, string) []KeyValue,
 			kv := mapf(mapFile, string(mes))
 			writeToMiddleFile(mapID, kv)
 			mapTaskDone("single", mapFile) // call to master -> this mapTask has been done
-		} else { // mapFile == "" -> none
+		} else {                        // mapFile == "" -> none
 			if mapTaskDone("all", "") { // when all over done, break for{}
 				break
 			}
@@ -109,8 +117,27 @@ func Worker(mapf func(string, string) []KeyValue,
 	for {
 		reduceID := getReduceTask()
 		if reduceID != -1 {
-			// ...
-		} else { // when reduceID is -1, it means none reduceTask
+			kva := make([]KeyValue, 0)
+			for j := 0; j < mapTaskNum; j++ {
+				fileName := fmt.Sprintf("mr-%d-%d", j, reduceID) // 1fileName v 1reduceTask
+				f, err := os.Open(fileName)
+				if err != nil {
+					fmt.Errorf("cannot open file named: %v", fileName)
+				}
+				// read back files
+				dec := json.NewDecoder(f)
+				f.Close()
+				for {
+					var kv KeyValue
+					if err := dec.Decode(&kv); err != nil {
+						break
+					}
+					kva = append(kva, kv) // append result
+				}
+			}
+			writeToEndFile(reduceID, kva, reducef)
+			reduceTaskDone(reduceID) // call to master
+		} else {             // when reduceID is -1, it means none reduceTask
 			if IsAllover() { // judge all reduceTask is over
 				break
 			}
@@ -130,8 +157,39 @@ func IsAllover() bool {
 }
 
 func getReduceTask() int {
-	// TODO
-	return 0
+	args := ReduceArgs{}
+	reply := ReduceReply{}
+	call("Coordinator.ReduceTask", &args, &reply)
+	return reply.ID
+}
+
+// mid: Intermediate datasets
+func writeToEndFile(reduceID int, mid []KeyValue, reducef func(string, []string) string) {
+	sort.Sort(ByKey(mid))
+	oname := fmt.Sprintf("mr-out-%d", reduceID)
+	ofile, _ := os.Create(oname) // output file
+	defer ofile.Close()
+	// call reduce at different middle key
+	i := 0
+	for i < len(mid) {
+		j := i + 1
+		for j < len(mid) && mid[j].Key == mid[i].Key {
+			j++
+		}
+		var values []string
+		for k := i; k < j; k++ {
+			values = append(values, mid[k].Value)
+		}
+		output := reducef(mid[i].Key, values) // call reduce func
+		fmt.Fprintf(ofile, "%v %v\n", mid[i].Key, output)
+		i = j
+	}
+}
+
+func reduceTaskDone(id int) {
+	args := ReduceTaskDoneArgs{ID: id}
+	reply := ReduceTaskDoneReply{}
+	call("Coordinator.ReduceTaskDone", &args, &reply)
 }
 
 /*// example function to show how to make an RPC call to the coordinator.
